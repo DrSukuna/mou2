@@ -1,0 +1,6 @@
+{
+  "name": "Morium Khatun — Memories Caught in Light",
+  "description": "Personal 3D portrait and memory archive of Morium Khatun, student of Banagram SB High School (HS) in Class 9.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

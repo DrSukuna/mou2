@@ -1,0 +1,3698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Morium Khatun — Memories Caught in Light</title>
+  <meta name="description" content="Personal 3D portrait and memory archive of Morium Khatun, student of Banagram SB High School (HS) in Class 9." />
+  <meta property="og:title" content="Morium Khatun — Memories Caught in Light" />
+  <meta property="og:description" content="Personal 3D portrait and memory archive of Morium Khatun, student of Banagram SB High School (HS) in Class 9." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&display=swap" />
+  <style>
+    :root {
+      --bg: #050505;
+      --ink: #f4f2ef;
+      --dim: #8c8783;
+      --gold: #d4a373;
+      --line: rgba(244,242,239,.28);
+      --pad: clamp(14px, 2.6vw, 34px);
+      --ease: cubic-bezier(.22,.61,.36,1);
+      --hw: min(56vw, 640px);
+      --persp: 1150px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --tap: 44px;
+      --serif: "Playfair Display", "Times New Roman", serif;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      background: #000;
+      scrollbar-gutter: stable;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: #000;
+      color: var(--ink);
+      overflow-x: hidden;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overscroll-behavior-y: none;
+      font-family: var(--sans);
+      font-weight: 300;
+    }
+
+    body.locked {
+      overflow: hidden;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    button {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    a {
+      -webkit-tap-highlight-color: transparent;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* 1. Scroll track for zoom dolly */
+    #scrolltrack {
+      height: 116vh;
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    /* 2. 3D Stage & Canvas */
+    #stage {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      perspective: var(--persp);
+      perspective-origin: 50% 50%;
+      overflow: hidden;
+      touch-action: none;
+      transition: opacity .6s var(--ease), filter .6s var(--ease);
+    }
+
+    @media (pointer: coarse) {
+      #stage {
+        touch-action: pan-y;
+      }
+    }
+
+    body.gridview #stage {
+      opacity: 0;
+      filter: blur(14px);
+      pointer-events: none;
+    }
+
+    /* Ambient Dust / Star Particle Canvas */
+    #dustCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.75;
+      transition: opacity 1s var(--ease);
+    }
+
+    #world {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+      will-change: transform;
+      z-index: 2;
+    }
+
+    #orb {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+      opacity: 1;
+      transform: none;
+    }
+
+    #headline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--hw);
+      margin-left: calc(var(--hw) / -2);
+      text-align: center;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(25px, 3.7vw, 55px);
+      line-height: 1.06;
+      letter-spacing: -.005em;
+      color: #fff;
+      text-shadow: 0 2px 34px rgba(0,0,0,.65), 0 0 40px rgba(212,163,115,.2);
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #headline .inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transform: translateY(-50%);
+    }
+
+    #headline .inner span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(.42em);
+      filter: blur(7px);
+    }
+
+    body.revealed #headline .inner span {
+      opacity: 1;
+      transform: none;
+      filter: blur(0);
+      transition: opacity 1.05s var(--ease), transform 1.15s var(--ease), filter 1.05s var(--ease);
+      transition-delay: calc(.9s + var(--i) * .085s);
+    }
+
+    /* 3D Photo Cards */
+    .card {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-style: preserve-3d;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      will-change: transform, opacity;
+      perspective: 700px;
+    }
+
+    /* Staggered Entrance Animation for 3D Cards */
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transform: scale(0);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    @keyframes cardScaleIn {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      65% {
+        transform: scale(1.06);
+        opacity: 0.95;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    body.revealed .card-inner {
+      animation: cardScaleIn 0.82s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: calc(0.12s + var(--i, 0) * 0.038s);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card-inner {
+        transform: none !important;
+        opacity: 1 !important;
+        animation: none !important;
+      }
+    }
+
+    .card figure {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #0d0d0d;
+      transition: transform .4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .4s ease, filter .4s ease;
+      transform-style: preserve-3d;
+    }
+
+    .card:hover figure {
+      box-shadow: 0 16px 36px rgba(0,0,0,0.8), 0 0 20px rgba(212,163,115,0.22);
+    }
+
+    /* Subtle Idle Glowing Pulse when user stops interacting */
+    @keyframes cardLivingGlow {
+      0%, 100% {
+        box-shadow: 0 10px 24px rgba(0,0,0,0.65), 0 0 0px rgba(255, 120, 160, 0);
+        filter: brightness(1);
+      }
+      50% {
+        box-shadow: 0 18px 42px rgba(0,0,0,0.85), 0 0 32px rgba(255, 120, 170, 0.45), 0 0 16px rgba(212, 163, 115, 0.4);
+        filter: brightness(1.1) saturate(1.08);
+      }
+    }
+
+    body.idle-pulse .card figure {
+      animation: cardLivingGlow 3.8s ease-in-out infinite;
+      animation-delay: calc(var(--i, 0) * 0.12s);
+    }
+
+    .card figure img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: transform .5s var(--ease);
+    }
+
+    .card:hover figure img {
+      transform: scale(1.05);
+    }
+
+    .card figure img.in {
+      opacity: 1;
+    }
+
+    body.revealed .card figure img {
+      transition: opacity .8s ease-out, transform .5s var(--ease);
+    }
+
+    .card figure::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,var(--d, 0));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.09);
+      border-radius: 4px;
+      pointer-events: none;
+      transition: background .2s ease;
+    }
+
+    /* Floating Title Label on Hover */
+    .card-label {
+      position: absolute;
+      bottom: calc(100% + 9px);
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: rgba(12, 10, 11, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(212, 163, 115, 0.45);
+      border-radius: 999px;
+      padding: 5px 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .25s var(--ease), transform .25s var(--ease);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.7), 0 0 14px rgba(212, 163, 115, 0.2);
+      z-index: 20;
+    }
+
+    .card-label span {
+      font-family: var(--serif);
+      font-size: 12.5px;
+      letter-spacing: .02em;
+      color: #fff;
+      display: block;
+      line-height: 1;
+    }
+
+    .card:hover .card-label {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 3. Vignette */
+    .vig {
+      position: fixed;
+      inset: 0;
+      z-index: 12;
+      pointer-events: none;
+      background: radial-gradient(ellipse 88% 92% at 50% 50%, transparent 48%, rgba(0,0,0,.26) 80%, rgba(0,0,0,.75) 100%);
+      transition: opacity .6s var(--ease);
+    }
+
+    body.gridview .vig,
+    body.lit .vig {
+      opacity: 0;
+    }
+
+    /* 4. Flat Grid */
+    #grid {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      overflow-y: auto;
+      overflow-x: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .6s var(--ease);
+      background: #000;
+      padding: calc(var(--pad) * 3.4) var(--pad) calc(var(--pad) * 4);
+    }
+
+    body.gridview #grid {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .grid-header {
+      max-width: 1680px;
+      margin: 0 auto 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 4px;
+    }
+
+    .grid-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 3vw, 42px);
+      font-weight: 400;
+      color: #fff;
+    }
+
+    .grid-subtitle {
+      font-size: 13px;
+      color: rgba(244,242,239,.6);
+      margin-top: 4px;
+    }
+
+    .btn-add-photo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 10px 18px;
+      border: 1px solid rgba(244,242,239,.35);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255,255,255,.05);
+      backdrop-filter: blur(8px);
+      transition: all .25s ease;
+    }
+
+    .btn-add-photo:hover {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+      box-shadow: 0 0 20px rgba(255,255,255,.3);
+    }
+
+    #grid .rows {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: clamp(12px, 1.5vw, 22px);
+      max-width: 1680px;
+      margin: 0 auto;
+    }
+
+    #grid figure {
+      position: relative;
+      aspect-ratio: 3/2;
+      border-radius: 4px;
+      background: #0b0b0b;
+      cursor: pointer;
+      margin: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.06);
+      transition: border-color .3s ease, transform .4s var(--ease);
+    }
+
+    #grid figure.tall {
+      aspect-ratio: 3/4;
+    }
+
+    #grid figure:hover {
+      border-color: rgba(212,163,115,.4);
+      transform: translateY(-4px);
+    }
+
+    #grid figure img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: .85;
+      transition: transform .7s var(--ease), opacity .7s var(--ease);
+      display: block;
+    }
+
+    #grid figure:hover img {
+      transform: scale(1.06);
+      opacity: 1;
+    }
+
+    #grid figcaption {
+      position: absolute;
+      inset: auto 0 0 0;
+      font-family: var(--serif);
+      font-size: 15px;
+      color: #f4f2ef;
+      background: linear-gradient(to top, rgba(0,0,0,.9) 0%, transparent 100%);
+      padding: 32px 16px 14px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .4s ease, transform .4s ease;
+      pointer-events: none;
+    }
+
+    #grid figcaption span {
+      display: block;
+      font-family: var(--sans);
+      font-size: 11px;
+      color: rgba(244,242,239,.65);
+      margin-top: 3px;
+      font-weight: 300;
+    }
+
+    #grid figure:hover figcaption {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* 5. Chrome Elements */
+    header.chrome,
+    .bio.chrome,
+    .colophon.chrome,
+    .gridbtn,
+    .cue.chrome {
+      opacity: 0;
+      transition: opacity 1.2s var(--ease) 0.15s, transform .4s ease;
+    }
+
+    body.revealed header.chrome,
+    body.revealed .bio.chrome,
+    body.revealed .colophon.chrome,
+    body.revealed .cue.chrome {
+      opacity: 1;
+    }
+
+    /* Header */
+    header.chrome {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 60;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: calc(var(--pad) * .8 + var(--safe-top)) calc(var(--pad) + var(--safe-right)) calc(var(--pad) * .35) calc(var(--pad) + var(--safe-left));
+      mix-blend-mode: difference;
+    }
+
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(19px, 2.1vw, 27px);
+      letter-spacing: .005em;
+      line-height: 1;
+      color: #fff;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .wordmark em {
+      font-style: normal;
+      color: #fff;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    /* Live Clock Pill */
+    .live-clock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: .08em;
+      font-family: var(--sans);
+      color: rgba(255, 255, 255, 0.95);
+      padding: 6px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      user-select: none;
+      transition: all .25s ease;
+      white-space: nowrap;
+    }
+
+    .live-clock-pill:hover {
+      border-color: rgba(255, 160, 190, 0.7);
+      background: rgba(255, 105, 180, 0.15);
+      box-shadow: 0 0 16px rgba(255, 105, 180, 0.35);
+    }
+
+    .clock-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ff6b8b;
+      box-shadow: 0 0 8px #ff6b8b;
+      animation: clockBlink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes clockBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.7); }
+    }
+
+    .clock-sep {
+      opacity: 0.45;
+    }
+
+    .clock-date {
+      opacity: 0.8;
+      font-size: 10.5px;
+    }
+
+    /* Love Actions in Header */
+    .btn-love-letter {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 6px 13px;
+      border: 1px solid rgba(255, 120, 160, 0.45);
+      border-radius: 999px;
+      color: #ffe0eb;
+      background: rgba(255, 105, 180, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      transition: all .25s ease;
+      white-space: nowrap;
+    }
+
+    .btn-love-letter:hover {
+      background: rgba(255, 105, 180, 0.3);
+      border-color: rgba(255, 140, 180, 0.85);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 18px rgba(255, 105, 180, 0.45);
+    }
+
+    .btn-petals {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      transition: all .25s ease;
+      white-space: nowrap;
+    }
+
+    .btn-petals:hover, .btn-petals.active {
+      border-color: rgba(255, 182, 193, 0.75);
+      color: #fff;
+      background: rgba(255, 105, 180, 0.18);
+      box-shadow: 0 0 14px rgba(255, 182, 193, 0.35);
+    }
+
+    .btn-sound {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 999px;
+      color: rgba(255,255,255,.75);
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: all .25s ease;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-sound:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,.6);
+    }
+
+    .menu-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px 0 4px;
+      cursor: pointer;
+    }
+
+    .menu-label {
+      font-family: var(--sans);
+      font-size: clamp(12px, 1.25vw, 15px);
+      letter-spacing: .01em;
+      color: #fff;
+      transition: opacity .35s ease;
+    }
+
+    body.menu-open .menu-label {
+      opacity: 0;
+    }
+
+    .bars {
+      position: relative;
+      width: clamp(42px, 4.4vw, 62px);
+      height: clamp(16px, 2vw, 22px);
+      display: block;
+    }
+
+    .bars i {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 1px;
+      background: #fff;
+      display: block;
+      transition: transform .4s var(--ease), width .4s var(--ease), background .4s var(--ease);
+    }
+
+    .bars .bar-top {
+      right: 0;
+      width: 100%;
+      transform: translateY(-5px);
+    }
+
+    .bars .bar-bot {
+      width: clamp(34px, 3.6vw, 50px);
+      transform: translateY(5px);
+    }
+
+    .menu-btn:hover .bar-bot {
+      transform: translateY(5px) translateX(-8px);
+    }
+
+    body.menu-open header.chrome {
+      z-index: 90;
+      mix-blend-mode: normal;
+    }
+
+    body.menu-open .wordmark {
+      color: var(--ink);
+    }
+
+    body.menu-open .bars .bar-top {
+      width: 100%;
+      transform: translateY(0) rotate(45deg);
+      background: var(--ink);
+    }
+
+    body.menu-open .bars .bar-bot {
+      width: 100%;
+      transform: translateY(0) rotate(-45deg);
+      background: var(--ink);
+    }
+
+    body.menu-open .menu-btn:hover .bar-bot {
+      transform: translateY(0) rotate(-45deg);
+    }
+
+    /* Photographer/Student Card .bio */
+    .bio {
+      position: fixed;
+      left: calc(var(--pad) + var(--safe-left));
+      bottom: calc(var(--pad) + var(--safe-bottom));
+      z-index: 55;
+      max-width: min(340px, 48vw);
+      transition: opacity .4s ease, transform .4s ease;
+    }
+
+    .bio .who {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    #avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 4px;
+      object-fit: cover;
+      display: block;
+      border: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 4px 14px rgba(0,0,0,.6);
+      transition: transform .3s ease, border-color .3s ease;
+    }
+
+    #avatar:hover {
+      transform: scale(1.06);
+      border-color: rgba(212,163,115,.6);
+    }
+
+    .bio b {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 19px;
+      letter-spacing: .01em;
+      color: var(--ink);
+      display: block;
+    }
+
+    .bio .school-badge {
+      font-size: 11px;
+      color: var(--gold);
+      letter-spacing: .04em;
+      margin-top: 2px;
+      display: block;
+    }
+
+    .bio p {
+      font-size: 12.5px;
+      line-height: 1.62;
+      color: rgba(244,242,239,.72);
+      margin: 0;
+    }
+
+    body.deep .bio,
+    body.gridview .bio,
+    body.lit .bio {
+      opacity: 0 !important;
+      transform: translateY(10px) !important;
+      pointer-events: none !important;
+    }
+
+    /* Colophon .colophon */
+    .colophon {
+      position: fixed;
+      right: calc(var(--pad) + var(--safe-right));
+      bottom: calc(var(--pad) + var(--safe-bottom));
+      z-index: 55;
+      font-size: 12.5px;
+      color: rgba(244,242,239,.72);
+      transition: opacity .4s ease;
+    }
+
+    body.gridview .colophon,
+    body.lit .colophon {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Grid Toggle button#gridBtn.gridbtn */
+    .gridbtn {
+      position: fixed;
+      left: calc(var(--pad) + var(--safe-left));
+      bottom: calc(var(--pad) + var(--safe-bottom));
+      z-index: 56;
+      width: 44px;
+      height: 44px;
+      padding: 5px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 4px;
+      transform: translateY(8px);
+      pointer-events: none;
+    }
+
+    body.revealed.deep .gridbtn,
+    body.revealed.gridview .gridbtn {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .gridbtn b {
+      display: block;
+      background: #f4f2ef;
+      border-radius: 2px;
+      transition: transform .35s var(--ease), background .35s ease;
+    }
+
+    .gridbtn:hover b {
+      background: #fff;
+      transform: scale(.86);
+    }
+
+    body.gridview .gridbtn b:nth-child(1) {
+      transform: translate(3px, 3px);
+    }
+
+    body.gridview .gridbtn b:nth-child(4) {
+      transform: translate(-3px, -3px);
+    }
+
+    body.gridview .gridbtn:hover b:nth-child(1) {
+      transform: translate(3px, 3px) scale(.86);
+    }
+
+    body.gridview .gridbtn:hover b:nth-child(4) {
+      transform: translate(-3px, -3px) scale(.86);
+    }
+
+    /* Scroll Cue .cue */
+    .cue {
+      position: fixed;
+      left: 50%;
+      bottom: calc(var(--pad) + var(--safe-bottom) + 4px);
+      transform: translateX(-50%);
+      z-index: 54;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .24em;
+      color: rgba(244,242,239,.42);
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity .4s ease, transform .4s ease;
+    }
+
+    .cue s.line {
+      position: relative;
+      display: block;
+      width: 44px;
+      height: 1px;
+      background: rgba(244,242,239,.28);
+      overflow: hidden;
+      text-decoration: none;
+    }
+
+    .cue s.line::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #f4f2ef;
+      transform: translateX(-100%);
+      animation: sweep 2.6s var(--ease) infinite;
+    }
+
+    @keyframes sweep {
+      0% { transform: translateX(-100%); }
+      55% { transform: translateX(0%); }
+      100% { transform: translateX(100%); }
+    }
+
+    body.deep .cue,
+    body.gridview .cue,
+    body.lit .cue {
+      opacity: 0 !important;
+      transform: translate(-50%, 8px) !important;
+      pointer-events: none !important;
+    }
+
+    /* 6. Menu #menu */
+    #menu {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: #050505;
+      display: grid;
+      place-items: center;
+      clip-path: inset(0 0 100% 0);
+      pointer-events: none;
+      transition: clip-path .85s var(--ease);
+    }
+
+    body.menu-open #menu {
+      clip-path: inset(0);
+      pointer-events: auto;
+    }
+
+    #menu nav {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(4px, 1.2vw, 12px);
+      text-align: center;
+    }
+
+    #menu nav a {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(34px, 7.6vw, 74px);
+      line-height: 1.08;
+      color: #f4f2ef;
+      text-decoration: none;
+      opacity: .55;
+      letter-spacing: 0;
+      transition: opacity .35s ease, letter-spacing .35s ease, color .35s ease;
+      cursor: pointer;
+    }
+
+    #menu nav a:hover {
+      opacity: 1;
+      letter-spacing: .012em;
+      color: #fff;
+    }
+
+    #menu .addr {
+      position: absolute;
+      left: calc(var(--pad) + var(--safe-left));
+      right: calc(var(--pad) + var(--safe-right));
+      bottom: calc(var(--pad) + var(--safe-bottom));
+      font-size: 12.5px;
+      color: var(--dim);
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    /* 7. Lightbox #lit */
+    #lit {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      padding: clamp(56px, 8vh, 84px) var(--pad);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .42s var(--ease);
+    }
+
+    body.lit #lit {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #lit .scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      cursor: pointer;
+    }
+
+    #lit .plate {
+      position: relative;
+      z-index: 2;
+      width: min(94vw, 1020px);
+      margin: auto;
+      perspective: 1200px;
+      transition: transform .62s var(--ease), opacity .42s var(--ease);
+      will-change: transform, opacity;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #lit .shot {
+      position: relative;
+      width: 100%;
+      height: min(60vh, 560px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: radial-gradient(ellipse at center, #1c1519 0%, #0d090b 65%, #050405 100%);
+      box-shadow: 0 32px 100px rgba(0,0,0,.95), 0 0 50px rgba(255,120,160,.16), inset 0 0 0 1px rgba(255,255,255,.1);
+      overflow: hidden;
+      transform-style: preserve-3d;
+      cursor: crosshair;
+    }
+
+    #litShine {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.32) 0%, transparent 65%);
+      mix-blend-mode: overlay;
+      transition: opacity .3s ease;
+      z-index: 3;
+    }
+
+    #litImg {
+      max-width: 95%;
+      max-height: 94%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 0 18px 48px rgba(0,0,0,.85);
+      display: block;
+      transition: transform .15s ease-out, filter .15s ease;
+      will-change: transform, filter;
+    }
+
+    .lit-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 999px;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #f4f2ef;
+      cursor: pointer;
+      transition: all .25s ease;
+      z-index: 10;
+    }
+
+    .lit-close:hover {
+      border-color: #ff85a1;
+      background: rgba(255,105,180,.25);
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    /* Professional Studio Lighting & Editing Bar */
+    .studio-panel {
+      background: rgba(18, 14, 16, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.65);
+    }
+
+    .studio-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .studio-presets {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-preset {
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .btn-preset:hover, .btn-preset.active {
+      background: rgba(255, 105, 180, 0.25);
+      border-color: rgba(255, 140, 180, 0.8);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+    }
+
+    .studio-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-studio-action {
+      font-size: 11.5px;
+      padding: 6px 13px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      cursor: pointer;
+      transition: all .2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-studio-action:hover {
+      border-color: rgba(255, 140, 180, 0.7);
+      background: rgba(255, 105, 180, 0.2);
+    }
+
+    .btn-save-memory {
+      background: linear-gradient(135deg, rgba(230, 70, 115, 0.7), rgba(212, 163, 115, 0.7));
+      border: 1px solid rgba(255, 200, 215, 0.5);
+    }
+
+    .studio-sliders {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px 18px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: rgba(244,242,239,0.7);
+      letter-spacing: .02em;
+    }
+
+    .slider-header span.val {
+      color: #ffd6e0;
+      font-weight: 400;
+    }
+
+    .slider-input {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.18);
+      outline: none;
+      cursor: pointer;
+      accent-color: #ff7597;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #ff85a1;
+      box-shadow: 0 0 6px rgba(255, 105, 180, 0.7);
+      cursor: pointer;
+    }
+
+    #lit .meta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      gap: clamp(18px, 2.8vw, 36px);
+      padding: 4px 6px;
+    }
+
+    #litTitle {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(20px, 2.1vw, 30px);
+      line-height: 1.1;
+      letter-spacing: -.01em;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+
+    #litWhere {
+      font-size: 13px;
+      color: #ff9ebb;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #litNote {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: rgba(244,242,239,.92);
+    }
+
+    /* 8. Intro Film #intro */
+    #intro {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #000;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    #intro video#film {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #intro .veil {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      transition: opacity 1.15s var(--ease);
+      pointer-events: none;
+    }
+
+    #intro.closing .veil {
+      opacity: 1;
+    }
+
+    #intro.gone {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .5s linear;
+    }
+
+    #intro button.skip {
+      position: absolute;
+      right: calc(var(--pad) + var(--safe-right));
+      bottom: calc(var(--pad) + var(--safe-bottom));
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(244,242,239,.7);
+      min-height: 44px;
+      padding: 10px 20px;
+      border: 1px solid rgba(244,242,239,.3);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,.3);
+      transition: color .25s ease, border-color .25s ease, opacity .35s ease, transform .25s ease;
+      z-index: 10;
+    }
+
+    #intro button.skip:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,.8);
+      transform: scale(1.05);
+    }
+
+    #intro.closing button.skip {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #intro .fallback {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 46%, #2b1820 0%, #0d080b 42%, #000 72%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .5s ease;
+    }
+
+    #intro.novideo .fallback {
+      opacity: 1;
+    }
+
+    /* 9. Splash #splash */
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 250;
+      background: #000;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 26px;
+      transition: opacity .6s var(--ease);
+    }
+
+    #splash.out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #splash .mark {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(28px, 4.4vw, 52px);
+      letter-spacing: .005em;
+      color: #f4f2ef;
+      opacity: 0;
+      animation: riseIn 1.25s var(--ease) .15s forwards;
+      text-align: center;
+    }
+
+    #splash .mark em {
+      font-style: normal;
+      color: #fff;
+    }
+
+    #splash .bar {
+      width: clamp(120px, 17vw, 210px);
+      height: 1px;
+      background: rgba(244,242,239,.16);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #splash s#bar {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #f4f2ef;
+      transform-origin: left;
+      transform: scaleX(0);
+      transition: transform .55s var(--ease);
+    }
+
+    #splash .tag {
+      font-size: 11px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      color: rgba(244,242,239,.45);
+      opacity: 0;
+      animation: riseIn .9s var(--ease) .7s forwards;
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(9px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* 10. Custom Cursor #dot */
+    #dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 19px;
+      height: 19px;
+      margin: -9.5px 0 0 -9.5px;
+      border-radius: 50%;
+      background: rgba(214,212,209,.9);
+      mix-blend-mode: difference;
+      border: 1px solid transparent;
+      pointer-events: none;
+      z-index: 300;
+      transition: width .35s var(--ease), height .35s var(--ease), margin .35s var(--ease), background .35s var(--ease), border-color .35s var(--ease);
+      display: none;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      #dot {
+        display: block;
+      }
+    }
+
+    #dot.wide {
+      width: 52px;
+      height: 52px;
+      margin: -26px 0 0 -26px;
+      background: rgba(244,242,239,.14);
+      border-color: rgba(244,242,239,.75);
+    }
+
+    /* 11. Modal: In-App Photo Uploader */
+    #uploadModal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s var(--ease);
+    }
+
+    #uploadModal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-box {
+      position: relative;
+      z-index: 2;
+      width: min(520px, 94vw);
+      background: #111;
+      border: 1px solid rgba(244,242,239,.15);
+      border-radius: 12px;
+      padding: clamp(20px, 3.2vw, 32px);
+      box-shadow: 0 25px 60px rgba(0,0,0,.8), 0 0 40px rgba(212,163,115,.1);
+    }
+
+    .modal-title {
+      font-family: var(--serif);
+      font-size: 24px;
+      font-weight: 400;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .modal-desc {
+      font-size: 13px;
+      color: rgba(244,242,239,.65);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .dropzone {
+      border: 2px dashed rgba(244,242,239,.25);
+      border-radius: 8px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255,255,255,.02);
+      transition: all .25s ease;
+      margin-bottom: 16px;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--gold);
+      background: rgba(212,163,115,.06);
+    }
+
+    .dropzone-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .dropzone-text {
+      font-size: 13px;
+      color: var(--ink);
+      font-weight: 400;
+    }
+
+    .dropzone-sub {
+      font-size: 11px;
+      color: rgba(244,242,239,.45);
+      margin-top: 4px;
+    }
+
+    .preview-container {
+      display: none;
+      margin-bottom: 16px;
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      max-height: 180px;
+    }
+
+    .preview-container img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .preview-clear {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,.7);
+      color: #fff;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.3);
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 12px;
+      color: rgba(244,242,239,.7);
+      margin-bottom: 5px;
+      letter-spacing: .02em;
+    }
+
+    .modal-input {
+      width: 100%;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(244,242,239,.15);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13.5px;
+      font-family: inherit;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .25s ease;
+    }
+
+    .modal-input:focus {
+      border-color: var(--gold);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .btn-cancel {
+      font-size: 13px;
+      padding: 10px 18px;
+      color: rgba(244,242,239,.7);
+      border-radius: 6px;
+      transition: color .2s ease;
+    }
+
+    .btn-cancel:hover {
+      color: #fff;
+    }
+
+    .btn-submit {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 22px;
+      background: var(--ink);
+      color: #000;
+      border-radius: 6px;
+      transition: all .25s ease;
+    }
+
+    .btn-submit:hover {
+      background: #fff;
+      box-shadow: 0 0 15px rgba(255,255,255,.4);
+    }
+
+    /* 12. Modal: Love Letter & Story for Morium */
+    #loveModal {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s var(--ease);
+      overflow-y: auto;
+    }
+
+    #loveModal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .love-box {
+      position: relative;
+      z-index: 2;
+      width: min(620px, 94vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      background: radial-gradient(circle at 50% 0%, #20141b 0%, #110c10 50%, #0a0709 100%);
+      border: 1px solid rgba(255, 140, 180, 0.35);
+      border-radius: 16px;
+      padding: clamp(24px, 4vw, 36px);
+      box-shadow: 0 30px 80px rgba(0,0,0,.9), 0 0 50px rgba(255,105,180,.2);
+      color: #fff;
+    }
+
+    .love-header {
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .love-avatar-wrap {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 12px;
+      position: relative;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, #ff7597, #d4a373, #ff7597);
+      box-shadow: 0 0 24px rgba(255, 117, 151, 0.5);
+    }
+
+    .love-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .love-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 3.2vw, 32px);
+      font-weight: 400;
+      letter-spacing: .01em;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff, #ffd1dc, #ff9ebb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .love-sub {
+      font-size: 12.5px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #ff9ebb;
+    }
+
+    /* Live Relationship / Love Timer */
+    .love-counter-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 140, 180, 0.25);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .counter-label {
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 6px;
+    }
+
+    .counter-digits {
+      font-family: var(--serif);
+      font-size: clamp(16px, 2.2vw, 22px);
+      color: #ffeef2;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .counter-digits span {
+      color: #ff85a1;
+      font-size: 13px;
+      font-family: var(--sans);
+      margin-left: 2px;
+    }
+
+    .love-letter-body {
+      font-size: 14px;
+      line-height: 1.75;
+      color: rgba(255, 245, 248, 0.92);
+      margin-bottom: 24px;
+      padding: 0 4px;
+    }
+
+    .love-letter-body p {
+      margin-bottom: 14px;
+    }
+
+    .love-highlights {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .love-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 14px;
+      transition: all .25s ease;
+    }
+
+    .love-card:hover {
+      border-color: rgba(255, 140, 180, 0.45);
+      background: rgba(255, 105, 180, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .love-card h4 {
+      font-family: var(--serif);
+      font-size: 15px;
+      color: #ff9ebb;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .love-card p {
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.8);
+      margin: 0;
+    }
+
+    .love-actions-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 18px;
+    }
+
+    .btn-heart-burst {
+      background: linear-gradient(135deg, #ff4d6d, #c9184a);
+      color: #fff;
+      font-size: 12.5px;
+      padding: 9px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 0 20px rgba(255, 77, 109, 0.45);
+      transition: all .2s ease;
+    }
+
+    .btn-heart-burst:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 28px rgba(255, 77, 109, 0.7);
+    }
+
+    .floating-heart {
+      position: fixed;
+      pointer-events: none;
+      z-index: 999;
+      animation: floatUpHeart 1.8s ease-out forwards;
+      font-size: 24px;
+    }
+
+    @keyframes floatUpHeart {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.6);
+      }
+      50% {
+        opacity: 0.9;
+        transform: translate(var(--drift-x, 20px), -120px) scale(1.2);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--drift-x, 40px), -240px) scale(1.6);
+      }
+    }
+
+    /* RESPONSIVE BREAKPOINTS */
+    @media (max-width: 900px) {
+      .bio {
+        max-width: min(420px, calc(100vw - (var(--pad) + var(--safe-left) + var(--pad) + var(--safe-right))));
+      }
+      .bio p {
+        font-size: 12px;
+      }
+      .colophon {
+        font-size: 11px;
+      }
+      #lit .meta {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding-top: 14px;
+      }
+      #lit .plate {
+        width: min(92vw, (100dvh - 220px) * 1.5);
+      }
+      #grid .rows {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+      #grid {
+        padding-top: calc(var(--pad) * 2.8 + var(--safe-top));
+      }
+    }
+
+    @media (max-width: 768px) {
+      .colophon {
+        display: none !important;
+      }
+      .bio {
+        max-width: calc(100vw - (var(--pad) + var(--safe-left) + var(--pad) + var(--safe-right)));
+      }
+      #headline {
+        font-size: clamp(22px, 6.4vw, 34px);
+      }
+      #menu nav a {
+        font-size: clamp(28px, 9vw, 54px);
+      }
+      #menu .addr {
+        font-size: 11.5px;
+      }
+      .btn-sound {
+        display: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --hw: min(84vw, 360px);
+        --pad: clamp(12px, 4vw, 18px);
+      }
+      #avatar {
+        width: 44px;
+        height: 44px;
+      }
+      .bio b {
+        font-size: 17px;
+      }
+      .bio p {
+        font-size: 11.5px;
+        line-height: 1.55;
+      }
+      .cue {
+        display: none !important;
+      }
+      #lit {
+        display: block;
+        overflow-y: auto;
+        padding: calc(52px + var(--safe-top)) calc(var(--pad) + var(--safe-right)) calc(var(--pad) + var(--safe-bottom)) calc(var(--pad) + var(--safe-left));
+      }
+      #lit .plate {
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      #litTitle {
+        font-size: clamp(20px, 5.6vw, 26px);
+      }
+      #litNote {
+        font-size: 12.5px;
+        line-height: 1.58;
+      }
+      .lit-close {
+        top: 8px;
+        right: 8px;
+      }
+      #grid {
+        padding: calc(var(--pad) * 2.8 + var(--safe-top)) calc(var(--pad) + var(--safe-right)) calc(var(--pad) * 4 + var(--safe-bottom)) calc(var(--pad) + var(--safe-left));
+      }
+      #grid .rows {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      #grid figcaption {
+        opacity: 1 !important;
+        transform: none !important;
+        font-size: 13px !important;
+      }
+    }
+
+    @media (max-width: 380px) {
+      :root {
+        --hw: min(88vw, 320px);
+      }
+      .bio .who {
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .bio p {
+        display: none !important;
+      }
+      #grid .rows {
+        grid-template-columns: 1fr;
+      }
+      #menu nav {
+        gap: 2px;
+      }
+      #menu nav a {
+        font-size: clamp(24px, 10vw, 40px);
+      }
+    }
+
+    @media (max-height: 520px) and (orientation: landscape) {
+      .bio, .colophon, .cue {
+        display: none !important;
+      }
+      #headline {
+        font-size: clamp(18px, 4.8vh, 28px);
+      }
+      #lit {
+        padding-top: calc(36px + var(--safe-top));
+      }
+      #lit .meta {
+        padding-top: 10px;
+      }
+      #lit .plate {
+        width: min(58vw, (100dvh - 80px) * 1.5);
+      }
+      header.chrome {
+        padding-top: calc(8px + var(--safe-top));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .14s !important;
+      }
+    }
+  </style>
+</head>
+<body class="locked">
+  <!-- 1. Scroll track -->
+  <div id="scrolltrack"></div>
+
+  <!-- 2. Stage -->
+  <div id="stage">
+    <canvas id="dustCanvas"></canvas>
+    <div id="world">
+      <div id="orb"></div>
+      <h1 id="headline">
+        <span class="inner">
+          <span style="--i:0">Memories</span> <span style="--i:1">Caught</span> <span style="--i:2">in</span> <span style="--i:3">the</span> <span style="--i:4">Light</span>
+        </span>
+      </h1>
+    </div>
+  </div>
+
+  <!-- 3. Vignette -->
+  <div class="vig"></div>
+
+  <!-- 4. Flat Grid -->
+  <div id="grid">
+    <div class="grid-header">
+      <div>
+        <h2 class="grid-title">Morium Khatun</h2>
+        <div class="grid-subtitle">Banagram SB High School (HS) · Class 9 Gallery</div>
+      </div>
+      <button class="btn-add-photo" id="gridAddPhotoBtn" aria-label="Add new photo">
+        <span>+</span> Add Photo
+      </button>
+    </div>
+    <div class="rows"></div>
+  </div>
+
+  <!-- 5. Chrome -->
+  <header class="chrome">
+    <a class="wordmark" href="#" aria-label="Morium Khatun">Morium<em>Khatun</em></a>
+    <div class="header-actions">
+      <!-- Live Clock Pill -->
+      <div class="live-clock-pill" id="liveClockPill" role="button" tabindex="0" title="Live Clock & Time in Love (Click to view)">
+        <span class="clock-dot"></span>
+        <span class="clock-time" id="clockTime">--:--:--</span>
+        <span class="clock-sep">·</span>
+        <span class="clock-date" id="clockDate">Today</span>
+      </div>
+      <!-- Girlfriend Love Letter -->
+      <button class="btn-love-letter" id="loveLetterBtn" aria-label="Open Love Letter for Morium">
+        <span>💌</span> <span>For My Love</span>
+      </button>
+      <!-- Love Petals Toggle -->
+      <button class="btn-petals active" id="petalsToggleBtn" aria-label="Toggle Love Petals">
+        <span id="petalsIcon">🌸</span> <span>Petals</span>
+      </button>
+      <!-- Sound Toggle -->
+      <button class="btn-sound" id="soundToggle" aria-label="Toggle ambient chimes">
+        <span id="soundIcon">♪</span> <span id="soundText">Sound: Off</span>
+      </button>
+      <!-- Menu Button -->
+      <button id="menuBtn" class="menu-btn" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
+        <span class="menu-label">Menu</span>
+        <span class="bars">
+          <i class="bar-top"></i>
+          <i class="bar-bot"></i>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <div class="bio chrome">
+    <div class="who">
+      <img id="avatar" src="/assets/aistudio/file_0000000013a88211920d2a21cbe84d19_051c382b.png" alt="Morium Khatun" width="52" height="52" />
+      <div>
+        <b>Morium Khatun</b>
+        <span class="school-badge">Banagram SB High School (HS) · Class 9</span>
+      </div>
+    </div>
+    <p>A personal archive of memories, school life, festive celebrations, and everyday moments caught in natural light.</p>
+  </div>
+
+  <div class="colophon chrome">Banagram · Class 9 · 2026</div>
+
+  <button id="gridBtn" class="gridbtn" aria-label="Toggle grid view">
+    <b></b><b></b><b></b><b></b>
+  </button>
+
+  <div class="cue chrome">
+    <s class="line"></s>
+    <span>Drag to rotate</span>
+  </div>
+
+  <!-- 6. Menu -->
+  <div id="menu">
+    <nav>
+      <a href="#archive" data-grid>The Archive</a>
+      <a href="#love" id="menuLoveLetterLink">💌 Love Letter & Story</a>
+      <a href="#upload" id="menuUploadLink">+ Add Our Memories</a>
+      <a href="#clock" id="menuClockLink">⏰ Banagram Live Clock</a>
+      <a href="#notes" data-close-menu>School Life · Class 9</a>
+      <a href="#contact" data-close-menu>Banagram SB High</a>
+    </nav>
+    <div class="addr">
+      Banagram SB High School (HS) · Class 9<br />
+      A personal visual archive crafted with love · 2026
+    </div>
+  </div>
+
+  <!-- 7. Lightbox with Uncropped 3D Studio & Full Lighting Controls -->
+  <div id="lit">
+    <div class="scrim" data-close></div>
+    <div class="plate">
+      <div class="shot" id="litShot">
+        <img id="litImg" src="" alt="" />
+        <div id="litShine"></div>
+        <button class="lit-close" data-close aria-label="Close">✕ Close</button>
+      </div>
+
+      <!-- Professional Studio Lighting & Aesthetic Controls -->
+      <div class="studio-panel">
+        <div class="studio-top-bar">
+          <div class="studio-presets">
+            <span style="font-size: 11px; opacity: .7; align-self: center; text-transform: uppercase; letter-spacing: .08em;">Aesthetic:</span>
+            <button class="btn-preset active" data-preset="natural" type="button">🌟 Natural</button>
+            <button class="btn-preset" data-preset="golden" type="button">🌅 Golden Hour</button>
+            <button class="btn-preset" data-preset="rose" type="button">🌹 Rose Romance</button>
+            <button class="btn-preset" data-preset="moon" type="button">🌙 Moonlight</button>
+            <button class="btn-preset" data-preset="film" type="button">🎞️ Vintage</button>
+          </div>
+          <div class="studio-actions">
+            <button class="btn-studio-action" id="btn3DTilt" type="button" title="Toggle 3D interactive tilt perspective">📐 3D Tilt: On</button>
+            <button class="btn-studio-action" id="btnResetStudio" type="button" title="Reset all adjustments">↩️ Reset</button>
+            <button class="btn-studio-action btn-save-memory" id="btnDownloadPhoto" type="button" title="Download enhanced photo">💾 Save Photo</button>
+          </div>
+        </div>
+
+        <div class="studio-sliders">
+          <div class="slider-item">
+            <div class="slider-header"><span>☀️ Exposure</span><span class="val" id="valBrightness">100%</span></div>
+            <input type="range" class="slider-input" id="slideBrightness" min="50" max="160" value="100" />
+          </div>
+          <div class="slider-item">
+            <div class="slider-header"><span>🌓 Contrast</span><span class="val" id="valContrast">100%</span></div>
+            <input type="range" class="slider-input" id="slideContrast" min="60" max="160" value="100" />
+          </div>
+          <div class="slider-item">
+            <div class="slider-header"><span>🕯️ Warmth</span><span class="val" id="valWarmth">0%</span></div>
+            <input type="range" class="slider-input" id="slideWarmth" min="0" max="80" value="0" />
+          </div>
+          <div class="slider-item">
+            <div class="slider-header"><span>🌸 Rose Blush</span><span class="val" id="valBlush">0%</span></div>
+            <input type="range" class="slider-input" id="slideBlush" min="0" max="100" value="0" />
+          </div>
+          <div class="slider-item">
+            <div class="slider-header"><span>💫 Soft Glow</span><span class="val" id="valGlow">0px</span></div>
+            <input type="range" class="slider-input" id="slideGlow" min="0" max="8" value="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div class="meta-left">
+          <h2 id="litTitle"></h2>
+          <div id="litWhere" class="where"></div>
+        </div>
+        <div class="meta-right">
+          <div id="litNote" class="note"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Intro Film / Cinematic Reveal -->
+  <div id="intro">
+    <video id="film" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260922_195107_ed3f055a-3a13-4a71-b743-e10310454246.mp4" muted playsinline preload="auto" disablepictureinpicture></video>
+    <div class="veil"></div>
+    <div class="fallback"></div>
+    <button id="skip" class="skip" aria-label="Skip intro">Enter Gallery</button>
+  </div>
+
+  <!-- 9. Splash -->
+  <div id="splash">
+    <div class="mark">Morium<em>Khatun</em></div>
+    <div class="bar"><s id="bar"></s></div>
+    <div class="tag">Banagram SB High School · Class 9</div>
+  </div>
+
+  <!-- 10. Custom Cursor -->
+  <div id="dot"></div>
+
+  <!-- 11. In-App Photo Uploader Modal -->
+  <div id="uploadModal">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-box">
+      <h3 class="modal-title">Add Your Photo</h3>
+      <p class="modal-desc">Pick any portrait or memory from your device to instantly feature it in your 3D sphere and gallery.</p>
+
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">📷</div>
+        <div class="dropzone-text">Click or drag photo here</div>
+        <div class="dropzone-sub">Supports JPG, PNG, WEBP from your phone or PC</div>
+        <input type="file" id="photoFileInput" accept="image/*" style="display: none;" />
+      </div>
+
+      <div class="preview-container" id="previewContainer">
+        <img id="uploadPreviewImg" src="" alt="Preview" />
+        <button class="preview-clear" id="previewClearBtn" type="button">Change</button>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="photoTitleInput">Memory Title</label>
+        <input class="modal-input" type="text" id="photoTitleInput" placeholder="e.g. Garden Smile, Festive Day" />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="photoPlaceInput">Occasion or Place</label>
+        <input class="modal-input" type="text" id="photoPlaceInput" placeholder="e.g. Banagram · Afternoon" />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="photoNoteInput">Short Story or Memory Note</label>
+        <input class="modal-input" type="text" id="photoNoteInput" placeholder="e.g. Captured with friends on a sunny afternoon." />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="uploadCancelBtn" type="button">Cancel</button>
+        <button class="btn-submit" id="uploadSubmitBtn" type="button">Add to 3D Archive</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. Modal: Love Letter & Story for Morium -->
+  <div id="loveModal">
+    <div class="modal-backdrop" id="loveModalBackdrop"></div>
+    <div class="love-box">
+      <div class="love-header">
+        <div class="love-avatar-wrap">
+          <img src="/assets/aistudio/file_0000000013a88211920d2a21cbe84d19_051c382b.png" alt="Morium Khatun" />
+        </div>
+        <h3 class="love-title">For My Beloved Morium ❤️</h3>
+        <div class="love-sub">Banagram SB High School (HS) · Class 9 · Forever in My Heart</div>
+      </div>
+
+      <!-- Live Love Milestone Ticker -->
+      <div class="love-counter-card">
+        <div class="counter-label">Days of Endless Love & Happiness</div>
+        <div class="counter-digits" id="loveMilestoneDigits">
+          <div><strong id="loveDays">186</strong><span>Days</span></div>
+          <div><strong id="loveHours">14</strong><span>Hours</span></div>
+          <div><strong id="loveMins">32</strong><span>Mins</span></div>
+          <div><strong id="loveSecs">18</strong><span>Secs</span></div>
+        </div>
+      </div>
+
+      <div class="love-letter-body">
+        <p><strong>Dearest Morium,</strong></p>
+        <p>This entire 3D archive is crafted just for you—to hold every gentle smile, every sparkle in your eyes, and every golden afternoon we cherish together.</p>
+        <p>Walking past Banagram SB High School, seeing you laugh in your floral dresses and traditional silk, every single portrait tells the story of how deeply you are loved. You bring light into my world like no one else ever could.</p>
+      </div>
+
+      <div class="love-highlights">
+        <div class="love-card">
+          <h4>🌹 Her Radiant Smile</h4>
+          <p>The kind of smile that lights up the whole room instantly and makes every day feel bright.</p>
+        </div>
+        <div class="love-card">
+          <h4>🎓 School Memories</h4>
+          <p>Class 9 at Banagram SB High School (HS)—growing together, dreaming together, building memories that last forever.</p>
+        </div>
+        <div class="love-card">
+          <h4>💖 Pure Grace & Kindness</h4>
+          <p>Gentle with words, lovely at heart, and stunning in every single photograph.</p>
+        </div>
+        <div class="love-card">
+          <h4>💍 My Forever Promise</h4>
+          <p>To always cherish you, support every dream you have, and love you more with every passing second.</p>
+        </div>
+      </div>
+
+      <div class="love-actions-footer">
+        <button class="btn-heart-burst" id="btnHeartBurst" type="button">
+          <span>💖</span> Send Morium Flying Hearts!
+        </button>
+        <button class="btn-cancel" id="loveModalCloseBtn" type="button">Close Letter</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      // 28 Photos uploaded by Morium Khatun
+      const INITIAL_PHOTOS = [
+        {
+          src: "/assets/aistudio/file_0000000013a88211920d2a21cbe84d19_051c382b.png",
+          title: "Golden Hour Glow",
+          place: "Banagram · Sunlit Afternoon",
+          note: "Warm evening sun catching the curls, wearing festive light embroidery on a quiet afternoon."
+        },
+        {
+          src: "/assets/aistudio/file_00000000cf08821195112001284d119e_650bd8ee.png",
+          title: "A Gentle Friend",
+          place: "Rooftop Garden · Banagram",
+          note: "Holding a soft white pup in the afternoon light. The best moments are always the quiet, warm ones."
+        },
+        {
+          src: "/assets/aistudio/file_00000000d7388207be7cdcbea418bffb_8baaec05.png",
+          title: "Serene Morning",
+          place: "Window Light · Banagram",
+          note: "Soft daylight by the green plants, braided hair with a delicate flower."
+        },
+        {
+          src: "/assets/aistudio/file_00000000d33c8211baa8a1552b6dd846_c464b83f.png",
+          title: "Velvet in Black",
+          place: "Evening Gathering",
+          note: "Dressed in sheer black embroidery with a simple flower in the hair."
+        },
+        {
+          src: "/assets/aistudio/file_00000000d3a08207822a9bd213fd123d_607fbc1c.png",
+          title: "Festive Splendor",
+          place: "Wedding Celebration",
+          note: "Dressed in crimson and gold with traditional bridal ornaments, mehendi, and ornate jewellery."
+        },
+        {
+          src: "/assets/aistudio/IMG-20261029-WA0019_c05c507c.jpg",
+          title: "Floral Crown",
+          place: "Special Day · Home",
+          note: "Wearing a handmade tiara of colourful roses and mehendi on the palms."
+        },
+        {
+          src: "/assets/aistudio/IMG-20261022-WA0021_c2c4fa1e.jpg",
+          title: "Garden Breeze",
+          place: "Outdoors · Green Canopy",
+          note: "Relaxing in floral casuals under the open courtyard shade."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260914-WA0037_9529980d.jpg",
+          title: "Greetings of Joy",
+          place: "Festive Evening",
+          note: "Wearing a rich plum silk saree with silver zari, sharing a respectful greeting."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260914-WA0045_a210724e.jpg",
+          title: "Playful Smile",
+          place: "Family Time",
+          note: "A spontaneous, mischievous candid smile between photo takes."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260914-WA0035_1afd560d.jpg",
+          title: "The Full Grace",
+          place: "Festive Hall",
+          note: "Full-length portrait in plum and gold silk with matching bangles."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260914-WA0025_a6e0411c.jpg",
+          title: "Elegance in Silk",
+          place: "Courtyard Hall",
+          note: "Draped in ornate brocade with hair falling gently over the shoulder."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260913-WA0118_5b4c8815.jpg",
+          title: "Soft Gaze",
+          place: "Afternoon Light",
+          note: "Contemplative look with a quiet smile, silver bangles, and casual comfort."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260913-WA0111_74675d77.jpg",
+          title: "Warm Reflections",
+          place: "Study Break",
+          note: "Relaxing between studies at Banagram High School."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260906-WA0008_f5a068de.jpg",
+          title: "Ruby & Pearls",
+          place: "Traditional Ceremony",
+          note: "Adorned with mehendi, a red ruby necklace, and a golden brocade veil."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260906-WA0002_392fae71.jpg",
+          title: "Shy Whisper",
+          place: "Family Celebration",
+          note: "Peeking from behind the ornate silk veil with a gentle smile."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260906-WA0005_93e4ffe4.jpg",
+          title: "Golden Tiara",
+          place: "Festive Ceremony",
+          note: "In a shimmering red dupatta with traditional forehead maang tikka and mehendi."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260902-WA0006_41ae8770.jpg",
+          title: "Soft Peach",
+          place: "Morning Hours",
+          note: "Wrapped in an embroidered pastel dupatta, resting chin on hands."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260830-WA0000_08d6250f.jpg",
+          title: "Sunlit Rose",
+          place: "Evening Sunlight",
+          note: "Warm evening hues with soft rose floral prints."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260830-WA0003_c228667d.jpg",
+          title: "In Full Bloom",
+          place: "Courtyard Garden",
+          note: "Holding fresh pink hibiscus flowers, smiling with nature."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260825-WA0006_bb38a0aa.jpg",
+          title: "School Days",
+          place: "Banagram SB High School (HS)",
+          note: "Class 9 memories with white and pink uniform dupatta."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260825-WA0008_bd3a20d1.jpg",
+          title: "Hibiscus Touch",
+          place: "Home Garden",
+          note: "Pink hibiscus tucked behind the ear, bright eyes and a peaceful smile."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260820-WA0041_a8531dfc.jpg",
+          title: "Chiffon & Laughter",
+          place: "Afternoon Sunshine",
+          note: "A bright smile framed in soft pastel chiffon."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260818-WA0006_12d83bd6.jpg",
+          title: "Quiet Thoughts",
+          place: "Evening Calm",
+          note: "Looking upward with thoughts and dreams for the coming school year."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260818-WA0005_6d5e6d2e.jpg",
+          title: "Dreaming Beyond",
+          place: "Room Window",
+          note: "A serene moment captured in soft ambient light."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260818-WA0002_a0492f0a.jpg",
+          title: "Rose Gold Print",
+          place: "Afternoon Walk",
+          note: "Hand under chin, wearing a lovely rose-gold floral dress."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260811-WA0047_f161f0d8.jpg",
+          title: "Simple Charm",
+          place: "Everyday Moments",
+          note: "Natural candid expression, capturing the warmth of school life."
+        },
+        {
+          src: "/assets/aistudio/IMG-20260811-WA0045_54987a34.jpg",
+          title: "Bright Smile",
+          place: "Banagram Morning",
+          note: "A joyful and genuine close-up portrait."
+        },
+        {
+          src: "/assets/aistudio/Screenshot_2026-08-16-17-48-12-41_1c337646f29875672b5a61192b9010f9_b9022f56.jpg",
+          title: "Summer Watch",
+          place: "Banagram",
+          note: "Sunlit profile with wristwatch, mehendi ring, and playful breeze."
+        }
+      ];
+
+      // Load any custom added photos from localStorage
+      let photoList = [...INITIAL_PHOTOS];
+      try {
+        const stored = localStorage.getItem('morium_custom_photos');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            photoList = [...parsed, ...INITIAL_PHOTOS];
+          }
+        }
+      } catch (e) {}
+
+      // Audio Chime Synth using Web Audio API
+      let audioCtx = null;
+      let soundEnabled = false;
+
+      function playChime(freq = 520, duration = 0.8) {
+        if (!soundEnabled) return;
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + duration);
+
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (err) {}
+      }
+
+      const soundToggleBtn = document.getElementById('soundToggle');
+      const soundText = document.getElementById('soundText');
+      soundToggleBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundText.textContent = soundEnabled ? 'Sound: On' : 'Sound: Off';
+        if (soundEnabled) {
+          playChime(660, 0.5);
+        }
+      });
+
+      // Canvas Dust & Love Petals Particle Simulation
+      const canvas = document.getElementById('dustCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      const PARTICLE_COUNT = 65;
+
+      let petals = [];
+      const PETAL_COUNT = 30;
+      let petalsEnabled = true;
+
+      const petalsToggleBtn = document.getElementById('petalsToggleBtn');
+      if (petalsToggleBtn) {
+        petalsToggleBtn.addEventListener('click', () => {
+          petalsEnabled = !petalsEnabled;
+          petalsToggleBtn.classList.toggle('active', petalsEnabled);
+          playChime(680, 0.35);
+        });
+      }
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+          x: (Math.random() - 0.5) * 1200,
+          y: (Math.random() - 0.5) * 1200,
+          z: (Math.random() - 0.5) * 800,
+          size: Math.random() * 2 + 0.8,
+          alpha: Math.random() * 0.7 + 0.2,
+          speedX: (Math.random() - 0.5) * 0.35,
+          speedY: (Math.random() - 0.5) * 0.35,
+          speedZ: (Math.random() - 0.5) * 0.35
+        });
+      }
+
+      for (let i = 0; i < PETAL_COUNT; i++) {
+        petals.push({
+          x: (Math.random() - 0.5) * 1400,
+          y: (Math.random() - 0.5) * 1200,
+          z: (Math.random() - 0.5) * 700,
+          size: Math.random() * 8 + 6,
+          angle: Math.random() * Math.PI * 2,
+          spinSpeed: (Math.random() - 0.5) * 0.025,
+          speedY: Math.random() * 0.55 + 0.3,
+          speedX: Math.sin(Math.random() * Math.PI) * 0.25,
+          isHeart: Math.random() > 0.6,
+          alpha: Math.random() * 0.55 + 0.35
+        });
+      }
+
+      function drawParticles(sx, sy, camZ) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const radX = (sx * Math.PI) / 180;
+        const radY = (sy * Math.PI) / 180;
+        const cosX = Math.cos(radX), sinX = Math.sin(radX);
+        const cosY = Math.cos(radY), sinY = Math.sin(radY);
+
+        // Starlight Dust
+        particles.forEach((p) => {
+          p.x += p.speedX;
+          p.y += p.speedY;
+          p.z += p.speedZ;
+
+          if (p.x > 600) p.x = -600;
+          if (p.x < -600) p.x = 600;
+          if (p.y > 600) p.y = -600;
+          if (p.y < -600) p.y = 600;
+          if (p.z > 400) p.z = -400;
+          if (p.z < -400) p.z = 400;
+
+          // Rotate around X
+          const y1 = p.y * cosX - p.z * sinX;
+          const z1 = p.y * sinX + p.z * cosX;
+          const x1 = p.x;
+
+          // Rotate around Y
+          const x2 = x1 * cosY + z1 * sinY;
+          const y2 = y1;
+          const z2 = -x1 * sinY + z1 * cosY + camZ;
+
+          const fov = 850;
+          const scale = fov / (fov + z2 + 450);
+
+          if (scale > 0 && z2 > -400) {
+            const screenX = cx + x2 * scale;
+            const screenY = cy + y2 * scale;
+            const radius = Math.max(0.6, p.size * scale);
+
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(244, 225, 200, ${p.alpha * Math.min(1, scale)})`;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = 'rgba(212, 163, 115, 0.6)';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        });
+
+        // Falling Rose Petals & Sparkling Hearts
+        if (petalsEnabled) {
+          petals.forEach((p) => {
+            p.y += p.speedY;
+            p.x += p.speedX;
+            p.angle += p.spinSpeed;
+
+            if (p.y > 650) {
+              p.y = -650;
+              p.x = (Math.random() - 0.5) * 1200;
+            }
+            if (p.x > 700) p.x = -700;
+            if (p.x < -700) p.x = 700;
+
+            const y1 = p.y * cosX - p.z * sinX;
+            const z1 = p.y * sinX + p.z * cosX;
+            const x1 = p.x;
+
+            const x2 = x1 * cosY + z1 * sinY;
+            const y2 = y1;
+            const z2 = -x1 * sinY + z1 * cosY + camZ;
+
+            const fov = 850;
+            const scale = fov / (fov + z2 + 450);
+
+            if (scale > 0 && z2 > -380) {
+              const screenX = cx + x2 * scale;
+              const screenY = cy + y2 * scale;
+              const radius = Math.max(2, p.size * scale);
+
+              ctx.save();
+              ctx.translate(screenX, screenY);
+              ctx.rotate(p.angle);
+
+              if (p.isHeart) {
+                // Heart shape
+                ctx.scale(radius * 0.1, radius * 0.1);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-5, -7, -12, 0, 0, 10);
+                ctx.bezierCurveTo(12, 0, 5, -7, 0, 0);
+                ctx.fillStyle = `rgba(255, 130, 170, ${p.alpha * Math.min(1, scale)})`;
+                ctx.shadowColor = 'rgba(255, 105, 180, 0.6)';
+                ctx.shadowBlur = 8;
+                ctx.fill();
+              } else {
+                // Rose petal shape
+                ctx.beginPath();
+                ctx.ellipse(0, 0, radius, radius * 0.52, 0, 0, Math.PI * 2);
+                const grad = ctx.createLinearGradient(-radius, 0, radius, 0);
+                grad.addColorStop(0, `rgba(255, 150, 185, ${p.alpha * Math.min(1, scale)})`);
+                grad.addColorStop(1, `rgba(225, 60, 105, ${p.alpha * 0.85 * Math.min(1, scale)})`);
+                ctx.fillStyle = grad;
+                ctx.shadowColor = 'rgba(255, 120, 160, 0.5)';
+                ctx.shadowBlur = 6;
+                ctx.fill();
+              }
+              ctx.restore();
+            }
+          });
+        }
+      }
+
+      // Sphere Setup
+      const GA = Math.PI * (3 - Math.sqrt(5));
+      let sphereCards = [];
+
+      const orbEl = document.getElementById('orb');
+      const worldEl = document.getElementById('world');
+      const headlineEl = document.getElementById('headline');
+      const stageEl = document.getElementById('stage');
+      const barEl = document.getElementById('bar');
+      const filmEl = document.getElementById('film');
+      const introEl = document.getElementById('intro');
+      const gridRowsEl = document.querySelector('#grid .rows');
+
+      let R = 300;
+      let cw = 140;
+      let perspective = 1150;
+
+      function buildDOM() {
+        orbEl.innerHTML = '';
+        gridRowsEl.innerHTML = '';
+        sphereCards = [];
+
+        const N = photoList.length;
+
+        for (let i = 0; i < N; i++) {
+          const y = N > 1 ? 1 - (i / (N - 1)) * 2 : 0;
+          const rad = Math.sqrt(Math.max(0, 1 - y * y));
+          const theta = i * GA;
+          const x = Math.cos(theta) * rad;
+          const z = Math.sin(theta) * rad;
+          const lat = Math.asin(y) * (180 / Math.PI);
+          const lon = Math.atan2(x, z) * (180 / Math.PI);
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.setAttribute('data-idx', i);
+          card.style.setProperty('--i', i);
+
+          const inner = document.createElement('div');
+          inner.className = 'card-inner';
+
+          const fig = document.createElement('figure');
+          const img = document.createElement('img');
+          img.alt = photoList[i].title;
+          img.src = photoList[i].src;
+          img.onload = () => img.classList.add('in');
+
+          fig.appendChild(img);
+          inner.appendChild(fig);
+
+          const label = document.createElement('div');
+          label.className = 'card-label';
+          const labelSpan = document.createElement('span');
+          labelSpan.textContent = photoList[i].title;
+          label.appendChild(labelSpan);
+          inner.appendChild(label);
+
+          card.appendChild(inner);
+          orbEl.appendChild(card);
+
+          // 3D Card Hover Tilt Micro-Physics
+          card.addEventListener('pointermove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const relX = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+            const relY = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+            fig.style.transform = `scale(1.06) rotateY(${relX * 14}deg) rotateX(${-relY * 14}deg)`;
+          });
+          card.addEventListener('pointerleave', () => {
+            fig.style.transform = '';
+          });
+
+          // Flat grid figure
+          const gridFig = document.createElement('figure');
+          gridFig.setAttribute('data-idx', i);
+          const gridImg = document.createElement('img');
+          gridImg.alt = photoList[i].title;
+          gridImg.src = photoList[i].src;
+
+          const caption = document.createElement('figcaption');
+          caption.innerHTML = `${photoList[i].title}<span>${photoList[i].place}</span>`;
+
+          gridFig.appendChild(gridImg);
+          gridFig.appendChild(caption);
+          gridRowsEl.appendChild(gridFig);
+
+          sphereCards.push({
+            i, x, y, z, lat, lon,
+            cardEl: card,
+            imgEl: img,
+            gridImgEl: gridImg,
+            prevD: null,
+            prevOp: null
+          });
+        }
+
+        layoutSphere();
+      }
+
+      function layoutSphere() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const hr = w <= 380 ? 0.38 : (w <= 640 ? 0.42 : 0.46);
+        const wr = w <= 380 ? 0.48 : (w <= 640 ? 0.52 : 0.58);
+        const floor = w <= 380 ? 108 : (w <= 640 ? 120 : 155);
+        R = Math.max(floor, Math.min(480, h * hr, w * wr));
+
+        const scale = w <= 380 ? 0.44 : (w <= 640 ? 0.46 : 0.47);
+        cw = Math.round(Math.max(72, R * scale));
+
+        if (w <= 380) perspective = 620;
+        else if (w <= 640) perspective = 760;
+        else if (w <= 900) perspective = 920;
+        else perspective = 1150;
+
+        document.documentElement.style.setProperty('--persp', perspective + 'px');
+
+        sphereCards.forEach((sc) => {
+          const cardHeight = cw * 1.35; // Elegant vertical portrait proportion
+          const marginLeft = -cw / 2;
+          const marginTop = -cardHeight / 2;
+
+          sc.cardEl.style.width = cw + 'px';
+          sc.cardEl.style.height = cardHeight + 'px';
+          sc.cardEl.style.marginLeft = marginLeft + 'px';
+          sc.cardEl.style.marginTop = marginTop + 'px';
+
+          sc.cardEl.style.transform = `translate3d(${sc.x * R}px, ${-sc.y * R}px, ${sc.z * R}px) rotateY(${sc.lon}deg) rotateX(${sc.lat}deg)`;
+        });
+      }
+
+      buildDOM();
+
+      let lastW = window.innerWidth;
+      let lastH = window.innerHeight;
+      window.addEventListener('resize', () => {
+        const nw = window.innerWidth;
+        const nh = window.innerHeight;
+        if (Math.abs(nw - lastW) > 20 || Math.abs(nh - lastH) > 20) {
+          lastW = nw;
+          lastH = nh;
+          layoutSphere();
+        }
+      });
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+          lastW = window.innerWidth;
+          lastH = window.innerHeight;
+          layoutSphere();
+        }, 220);
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', layoutSphere);
+      }
+
+      // Splash Progress
+      const splashBirth = performance.now();
+      let splashFinished = false;
+
+      function completeSplash() {
+        if (splashFinished) return;
+        splashFinished = true;
+        barEl.style.transform = 'scaleX(1)';
+        const splash = document.getElementById('splash');
+        setTimeout(() => {
+          splash.classList.add('out');
+          setTimeout(() => {
+            if (splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 950);
+          startFilm();
+        }, 350);
+      }
+
+      setTimeout(completeSplash, 1200);
+
+      // Reveal Archive Function
+      let filmRevealed = false;
+      let revealTimeout = null;
+
+      function revealArchive(isFast = false) {
+        if (filmRevealed) return;
+        filmRevealed = true;
+        if (revealTimeout) clearTimeout(revealTimeout);
+
+        introEl.classList.add('closing');
+        document.body.classList.remove('locked');
+        document.documentElement.style.overflow = '';
+
+        layoutSphere();
+        requestAnimationFrame(layoutSphere);
+
+        const delay = isFast ? 300 : 800;
+        setTimeout(() => {
+          layoutSphere();
+          document.body.classList.add('revealed');
+          introEl.classList.add('gone');
+          playChime(580, 0.6);
+          setTimeout(() => {
+            if (introEl.parentNode) introEl.parentNode.removeChild(introEl);
+          }, 700);
+        }, delay);
+      }
+
+      function startFilm() {
+        filmEl.muted = true;
+        filmEl.defaultMuted = true;
+        filmEl.playsInline = true;
+        filmEl.setAttribute('webkit-playsinline', '');
+
+        if (filmEl.currentTime > 0.05) {
+          try { filmEl.currentTime = 0; } catch (e) {}
+        }
+        filmEl.playbackRate = 2;
+
+        filmEl.addEventListener('play', () => {
+          filmEl.playbackRate = 2;
+        });
+
+        filmEl.addEventListener('playing', () => {
+          const dur = filmEl.duration || 6;
+          const cur = filmEl.currentTime || 0;
+          const waitTime = Math.max(0.3, (dur - cur - 0.45) / 2);
+          revealTimeout = setTimeout(revealArchive, waitTime * 1000);
+        });
+
+        filmEl.addEventListener('ended', () => revealArchive(false));
+        filmEl.addEventListener('error', () => {
+          introEl.classList.add('novideo');
+          setTimeout(() => revealArchive(true), 600);
+        });
+
+        const playPromise = filmEl.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            setTimeout(() => revealArchive(true), 1100);
+          });
+        }
+        setTimeout(() => revealArchive(false), 8000);
+      }
+
+      document.getElementById('skip').addEventListener('click', () => revealArchive(true));
+
+      // Camera & Physics State
+      let spin = 0;
+      let tilt = -4;
+      let camZ = 0;
+      let dragX = 0;
+      let dragY = 0;
+      let velX = 0;
+      let velY = 0;
+      let focusedIndex = -1;
+      let lastInteractionTime = performance.now();
+
+      // Scroll clamping
+      window.addEventListener('scroll', () => {
+        const maxScroll = window.innerHeight * 0.16;
+        if (window.scrollY > maxScroll) {
+          window.scrollTo(0, maxScroll);
+        }
+      }, { passive: false });
+
+      // Drag Rotation Handling
+      let isDragging = false;
+      let dragCaptured = false;
+      let touchDetermined = false;
+      let touchScrolling = false;
+      let startX = 0, startY = 0;
+      let lastPointerX = 0, lastPointerY = 0;
+      let initialCardUnderCursor = null;
+      let currentPointerId = null;
+
+      stageEl.addEventListener('pointerdown', (e) => {
+        if (focusedIndex !== -1 || document.body.classList.contains('gridview') || document.body.classList.contains('menu-open')) return;
+        lastInteractionTime = performance.now();
+
+        initialCardUnderCursor = e.target.closest('.card');
+        startX = e.clientX;
+        startY = e.clientY;
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+        currentPointerId = e.pointerId;
+        velX = 0;
+        velY = 0;
+
+        if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+          isDragging = true;
+          dragCaptured = true;
+          touchDetermined = true;
+          touchScrolling = false;
+          try { stageEl.setPointerCapture(e.pointerId); } catch (err) {}
+        } else {
+          isDragging = false;
+          dragCaptured = false;
+          touchDetermined = false;
+          touchScrolling = false;
+        }
+      });
+
+      stageEl.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== currentPointerId) return;
+        lastInteractionTime = performance.now();
+
+        const dx = e.clientX - lastPointerX;
+        const dy = e.clientY - lastPointerY;
+        const totalDx = e.clientX - startX;
+        const totalDy = e.clientY - startY;
+        const dist = Math.hypot(totalDx, totalDy);
+
+        if (!touchDetermined && e.pointerType === 'touch') {
+          if (dist >= 10) {
+            touchDetermined = true;
+            if (Math.abs(totalDy) > Math.abs(totalDx) * 1.15) {
+              touchScrolling = true;
+              isDragging = false;
+              return;
+            } else {
+              touchScrolling = false;
+              isDragging = true;
+              dragCaptured = true;
+              try { stageEl.setPointerCapture(e.pointerId); } catch (err) {}
+            }
+          } else {
+            return;
+          }
+        }
+
+        if (touchScrolling) return;
+
+        if (isDragging) {
+          const deltaYaw = dx * 0.13;
+          const deltaPitch = -dy * 0.13;
+          dragX += deltaYaw;
+          dragY += deltaPitch;
+
+          dragY = Math.max(-32 - tilt, Math.min(32 - tilt, dragY));
+
+          velX = deltaYaw * 0.7;
+          velY = deltaPitch * 0.7;
+
+          lastPointerX = e.clientX;
+          lastPointerY = e.clientY;
+        }
+      });
+
+      function finishPointer(e) {
+        if (e.pointerId !== currentPointerId) return;
+        lastInteractionTime = performance.now();
+
+        const totalDx = e.clientX - startX;
+        const totalDy = e.clientY - startY;
+        const totalDist = Math.hypot(totalDx, totalDy);
+        const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+        const clickSlop = isCoarse ? 14 : 6;
+
+        if (dragCaptured) {
+          try { stageEl.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+
+        if (totalDist <= clickSlop && initialCardUnderCursor) {
+          const idx = parseInt(initialCardUnderCursor.getAttribute('data-idx'), 10);
+          if (!isNaN(idx)) {
+            openLightbox(idx, initialCardUnderCursor);
+          }
+        }
+
+        isDragging = false;
+        dragCaptured = false;
+        touchDetermined = false;
+        touchScrolling = false;
+        currentPointerId = null;
+        initialCardUnderCursor = null;
+      }
+
+      stageEl.addEventListener('pointerup', finishPointer);
+      stageEl.addEventListener('pointercancel', finishPointer);
+
+      // Lightbox Logic
+      // Lightbox Logic & Professional 3D Studio Controls
+      const litEl = document.getElementById('lit');
+      const plateEl = litEl.querySelector('.plate');
+      const litShotEl = document.getElementById('litShot');
+      const litShineEl = document.getElementById('litShine');
+      const litImgEl = document.getElementById('litImg');
+      const litTitleEl = document.getElementById('litTitle');
+      const litWhereEl = document.getElementById('litWhere');
+      const litNoteEl = document.getElementById('litNote');
+
+      // Studio Sliders & Controls
+      const slideBrightness = document.getElementById('slideBrightness');
+      const slideContrast = document.getElementById('slideContrast');
+      const slideWarmth = document.getElementById('slideWarmth');
+      const slideBlush = document.getElementById('slideBlush');
+      const slideGlow = document.getElementById('slideGlow');
+
+      const valBrightness = document.getElementById('valBrightness');
+      const valContrast = document.getElementById('valContrast');
+      const valWarmth = document.getElementById('valWarmth');
+      const valBlush = document.getElementById('valBlush');
+      const valGlow = document.getElementById('valGlow');
+
+      const btn3DTilt = document.getElementById('btn3DTilt');
+      const btnResetStudio = document.getElementById('btnResetStudio');
+      const btnDownloadPhoto = document.getElementById('btnDownloadPhoto');
+      const presetBtns = document.querySelectorAll('.btn-preset');
+
+      let currentBrightness = 100;
+      let currentContrast = 100;
+      let currentWarmth = 0;
+      let currentBlush = 0;
+      let currentGlow = 0;
+      let is3DTiltEnabled = true;
+
+      function updatePhotoFilter() {
+        const filterStr = `brightness(${currentBrightness}%) contrast(${currentContrast}%) sepia(${currentWarmth}%) hue-rotate(-${currentBlush * 0.28}deg) drop-shadow(0 0 ${currentGlow}px rgba(255, 120, 170, 0.65))`;
+        litImgEl.style.filter = filterStr;
+
+        if (valBrightness) valBrightness.textContent = currentBrightness + '%';
+        if (valContrast) valContrast.textContent = currentContrast + '%';
+        if (valWarmth) valWarmth.textContent = currentWarmth + '%';
+        if (valBlush) valBlush.textContent = currentBlush + '%';
+        if (valGlow) valGlow.textContent = currentGlow + 'px';
+      }
+
+      function setPreset(name) {
+        presetBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-preset') === name));
+        if (name === 'natural') {
+          currentBrightness = 100; currentContrast = 100; currentWarmth = 0; currentBlush = 0; currentGlow = 0;
+        } else if (name === 'golden') {
+          currentBrightness = 112; currentContrast = 106; currentWarmth = 35; currentBlush = 0; currentGlow = 2;
+        } else if (name === 'rose') {
+          currentBrightness = 108; currentContrast = 104; currentWarmth = 10; currentBlush = 48; currentGlow = 3;
+        } else if (name === 'moon') {
+          currentBrightness = 106; currentContrast = 120; currentWarmth = 0; currentBlush = 0; currentGlow = 1;
+        } else if (name === 'film') {
+          currentBrightness = 114; currentContrast = 125; currentWarmth = 22; currentBlush = 12; currentGlow = 0;
+        }
+        if (slideBrightness) slideBrightness.value = currentBrightness;
+        if (slideContrast) slideContrast.value = currentContrast;
+        if (slideWarmth) slideWarmth.value = currentWarmth;
+        if (slideBlush) slideBlush.value = currentBlush;
+        if (slideGlow) slideGlow.value = currentGlow;
+        updatePhotoFilter();
+      }
+
+      presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          setPreset(btn.getAttribute('data-preset'));
+          playChime(560, 0.25);
+        });
+      });
+
+      if (slideBrightness) slideBrightness.addEventListener('input', (e) => { currentBrightness = e.target.value; updatePhotoFilter(); });
+      if (slideContrast) slideContrast.addEventListener('input', (e) => { currentContrast = e.target.value; updatePhotoFilter(); });
+      if (slideWarmth) slideWarmth.addEventListener('input', (e) => { currentWarmth = e.target.value; updatePhotoFilter(); });
+      if (slideBlush) slideBlush.addEventListener('input', (e) => { currentBlush = e.target.value; updatePhotoFilter(); });
+      if (slideGlow) slideGlow.addEventListener('input', (e) => { currentGlow = e.target.value; updatePhotoFilter(); });
+
+      if (btn3DTilt) {
+        btn3DTilt.addEventListener('click', () => {
+          is3DTiltEnabled = !is3DTiltEnabled;
+          btn3DTilt.textContent = is3DTiltEnabled ? '📐 3D Tilt: On' : '📐 3D Tilt: Off';
+          if (!is3DTiltEnabled) {
+            litImgEl.style.transform = '';
+            if (litShineEl) litShineEl.style.opacity = '0';
+          }
+          playChime(620, 0.3);
+        });
+      }
+
+      if (btnResetStudio) {
+        btnResetStudio.addEventListener('click', () => {
+          setPreset('natural');
+          playChime(520, 0.3);
+        });
+      }
+
+      // Interactive 3D Perspective Tilt on Uncropped Photo
+      if (litShotEl) {
+        litShotEl.addEventListener('pointermove', (e) => {
+          if (!is3DTiltEnabled) return;
+          const rect = litShotEl.getBoundingClientRect();
+          const relX = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+          const relY = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+
+          litImgEl.style.transform = `scale(1.025) rotateY(${relX * 11}deg) rotateX(${-relY * 11}deg)`;
+          if (litShineEl) {
+            litShineEl.style.opacity = '0.35';
+            litShineEl.style.transform = `translate(${relX * 45}px, ${relY * 45}px)`;
+          }
+        });
+
+        litShotEl.addEventListener('pointerleave', () => {
+          litImgEl.style.transform = '';
+          if (litShineEl) litShineEl.style.opacity = '0';
+        });
+      }
+
+      // Download Enhanced Photo with Live Filters
+      if (btnDownloadPhoto) {
+        btnDownloadPhoto.addEventListener('click', () => {
+          try {
+            const dlCanvas = document.createElement('canvas');
+            const dlCtx = dlCanvas.getContext('2d');
+            dlCanvas.width = litImgEl.naturalWidth || 800;
+            dlCanvas.height = litImgEl.naturalHeight || 1000;
+
+            dlCtx.filter = litImgEl.style.filter || 'none';
+            dlCtx.drawImage(litImgEl, 0, 0, dlCanvas.width, dlCanvas.height);
+
+            const link = document.createElement('a');
+            link.download = `Morium_Khatun_${photoList[focusedIndex]?.title?.replace(/\s+/g, '_') || 'Memory'}.jpg`;
+            link.href = dlCanvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+            playChime(740, 0.4);
+          } catch (err) {
+            const link = document.createElement('a');
+            link.download = `Morium_Memory.jpg`;
+            link.href = litImgEl.src;
+            link.target = '_blank';
+            link.click();
+          }
+        });
+      }
+
+      let sourceElement = null;
+
+      function openLightbox(idx, sourceEl) {
+        if (idx < 0 || idx >= photoList.length) return;
+        focusedIndex = idx;
+        sourceElement = sourceEl;
+
+        playChime(640, 0.4);
+
+        // Reset to natural preset on open so full photo is pristine
+        setPreset('natural');
+
+        litImgEl.src = photoList[idx].src;
+        litTitleEl.textContent = photoList[idx].title;
+        litWhereEl.innerHTML = `<span>📍</span> ${photoList[idx].place}`;
+        litNoteEl.textContent = photoList[idx].note;
+
+        document.body.classList.add('lit');
+
+        // FLIP Animation
+        const sourceRect = sourceEl.getBoundingClientRect();
+        plateEl.style.transition = 'none';
+
+        const plateRect = plateEl.getBoundingClientRect();
+        const sx = sourceRect.left + sourceRect.width / 2;
+        const sy = sourceRect.top + sourceRect.height / 2;
+        const px = plateRect.left + plateRect.width / 2;
+        const py = plateRect.top + plateRect.height / 2;
+        const dx = sx - px;
+        const dy = sy - py;
+        const scale = Math.max(0.04, sourceRect.width / (plateRect.width || 1));
+
+        plateEl.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+        plateEl.style.opacity = '0';
+
+        void plateEl.offsetHeight;
+
+        plateEl.style.transition = '';
+        plateEl.style.transform = '';
+        plateEl.style.opacity = '';
+      }
+
+      function closeLightbox() {
+        if (focusedIndex === -1 && !document.body.classList.contains('lit')) return;
+
+        focusedIndex = -1;
+        document.body.classList.remove('lit');
+        litImgEl.style.transform = '';
+
+        if (sourceElement) {
+          const sourceRect = sourceElement.getBoundingClientRect();
+          const plateRect = plateEl.getBoundingClientRect();
+          const sx = sourceRect.left + sourceRect.width / 2;
+          const sy = sourceRect.top + sourceRect.height / 2;
+          const px = plateRect.left + plateRect.width / 2;
+          const py = plateRect.top + plateRect.height / 2;
+          const dx = sx - px;
+          const dy = sy - py;
+          const scale = Math.max(0.04, sourceRect.width / (plateRect.width || 1));
+
+          plateEl.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+          plateEl.style.opacity = '0';
+
+          setTimeout(() => {
+            plateEl.style.transition = 'none';
+            plateEl.style.transform = '';
+            plateEl.style.opacity = '';
+            void plateEl.offsetHeight;
+            plateEl.style.transition = '';
+          }, 640);
+        } else {
+          plateEl.style.opacity = '0';
+          setTimeout(() => {
+            plateEl.style.opacity = '';
+          }, 640);
+        }
+      }
+
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('[data-close]')) {
+          closeLightbox();
+        }
+      });
+
+      // Grid view clicks
+      gridRowsEl.addEventListener('click', (e) => {
+        const fig = e.target.closest('figure');
+        if (fig) {
+          const idx = parseInt(fig.getAttribute('data-idx'), 10);
+          if (!isNaN(idx)) {
+            openLightbox(idx, fig);
+          }
+        }
+      });
+
+      // Grid toggle
+      const gridBtn = document.getElementById('gridBtn');
+      function toggleGridView() {
+        document.body.classList.toggle('gridview');
+        playChime(500, 0.3);
+      }
+      gridBtn.addEventListener('click', toggleGridView);
+
+      // Menu
+      const menuBtn = document.getElementById('menuBtn');
+      function openMenu() {
+        document.body.classList.add('menu-open');
+        menuBtn.setAttribute('aria-expanded', 'true');
+        menuBtn.setAttribute('aria-label', 'Close menu');
+        playChime(700, 0.3);
+      }
+      function closeMenu() {
+        document.body.classList.remove('menu-open');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        menuBtn.setAttribute('aria-label', 'Open menu');
+      }
+
+      menuBtn.addEventListener('click', () => {
+        if (document.body.classList.contains('menu-open')) {
+          closeMenu();
+        } else {
+          openMenu();
+        }
+      });
+
+      document.querySelectorAll('#menu nav a').forEach((a) => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeMenu();
+          if (a.hasAttribute('data-grid')) {
+            if (!document.body.classList.contains('gridview')) {
+              toggleGridView();
+            }
+          } else if (a.id === 'menuUploadLink') {
+            openUploadModal();
+          } else if (a.id === 'menuLoveLetterLink' || a.id === 'menuClockLink') {
+            openLoveModal();
+          }
+        });
+      });
+
+      // Photo Upload Modal Logic
+      const uploadModal = document.getElementById('uploadModal');
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('photoFileInput');
+      const previewContainer = document.getElementById('previewContainer');
+      const previewImg = document.getElementById('uploadPreviewImg');
+      const previewClearBtn = document.getElementById('previewClearBtn');
+      const titleInput = document.getElementById('photoTitleInput');
+      const placeInput = document.getElementById('photoPlaceInput');
+      const noteInput = document.getElementById('photoNoteInput');
+      const cancelBtn = document.getElementById('uploadCancelBtn');
+      const submitBtn = document.getElementById('uploadSubmitBtn');
+      const modalBackdrop = document.getElementById('modalBackdrop');
+      const gridAddPhotoBtn = document.getElementById('gridAddPhotoBtn');
+
+      let currentUploadedBlob = null;
+
+      function openUploadModal() {
+        uploadModal.classList.add('open');
+        currentUploadedBlob = null;
+        previewImg.src = '';
+        previewContainer.style.display = 'none';
+        dropzone.style.display = 'block';
+        titleInput.value = '';
+        placeInput.value = '';
+        noteInput.value = '';
+      }
+
+      function closeUploadModal() {
+        uploadModal.classList.remove('open');
+      }
+
+      gridAddPhotoBtn.addEventListener('click', openUploadModal);
+      cancelBtn.addEventListener('click', closeUploadModal);
+      modalBackdrop.addEventListener('click', closeUploadModal);
+
+      dropzone.addEventListener('click', () => fileInput.click());
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+      });
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleSelectedFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files && fileInput.files[0]) {
+          handleSelectedFile(fileInput.files[0]);
+        }
+      });
+
+      function handleSelectedFile(file) {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          currentUploadedBlob = e.target.result;
+          previewImg.src = currentUploadedBlob;
+          previewContainer.style.display = 'block';
+          dropzone.style.display = 'none';
+          if (!titleInput.value) {
+            titleInput.value = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+          }
+          if (!placeInput.value) {
+            placeInput.value = 'Banagram · Memories';
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+
+      previewClearBtn.addEventListener('click', () => {
+        currentUploadedBlob = null;
+        previewImg.src = '';
+        previewContainer.style.display = 'none';
+        dropzone.style.display = 'block';
+        fileInput.value = '';
+      });
+
+      submitBtn.addEventListener('click', () => {
+        if (!currentUploadedBlob) {
+          alert('Please pick a photo from your device first.');
+          return;
+        }
+
+        const newPhoto = {
+          src: currentUploadedBlob,
+          title: titleInput.value.trim() || 'Cherished Memory',
+          place: placeInput.value.trim() || 'Banagram SB High School',
+          note: noteInput.value.trim() || 'Added to Morium’s personal 3D memory collection.'
+        };
+
+        photoList.unshift(newPhoto);
+
+        // Store custom additions in localStorage (up to 5 recent custom photos)
+        try {
+          const stored = localStorage.getItem('morium_custom_photos');
+          const list = stored ? JSON.parse(stored) : [];
+          list.unshift(newPhoto);
+          localStorage.setItem('morium_custom_photos', JSON.stringify(list.slice(0, 5)));
+        } catch (e) {}
+
+        buildDOM();
+        closeUploadModal();
+        playChime(880, 0.6);
+      });
+
+      // Escape key
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (uploadModal.classList.contains('open')) {
+            closeUploadModal();
+          } else if (loveModal && loveModal.classList.contains('open')) {
+            closeLoveModal();
+          } else if (document.body.classList.contains('lit')) {
+            closeLightbox();
+          } else if (document.body.classList.contains('menu-open')) {
+            closeMenu();
+          } else if (document.body.classList.contains('gridview')) {
+            toggleGridView();
+          }
+        }
+      });
+
+      // Live Clock & Relationship Milestones
+      function updateLiveClock() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+
+        const clockTimeEl = document.getElementById('clockTime');
+        const clockDateEl = document.getElementById('clockDate');
+        if (clockTimeEl) {
+          clockTimeEl.textContent = `${displayHours}:${minutes}:${seconds} ${ampm}`;
+        }
+        if (clockDateEl) {
+          const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+          clockDateEl.textContent = now.toLocaleDateString(undefined, opts);
+        }
+
+        updateLoveMilestones();
+      }
+
+      function updateLoveMilestones() {
+        const startDate = new Date('2026-05-05T00:00:00');
+        const now = new Date();
+        const diffMs = Math.max(0, now - startDate);
+
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+        const mins = Math.floor((diffMs / (1000 * 60)) % 60);
+        const secs = Math.floor((diffMs / 1000) % 60);
+
+        const daysEl = document.getElementById('loveDays');
+        const hoursEl = document.getElementById('loveHours');
+        const minsEl = document.getElementById('loveMins');
+        const secsEl = document.getElementById('loveSecs');
+
+        if (daysEl) daysEl.textContent = days;
+        if (hoursEl) hoursEl.textContent = hours;
+        if (minsEl) minsEl.textContent = mins;
+        if (secsEl) secsEl.textContent = secs;
+      }
+
+      setInterval(updateLiveClock, 1000);
+      updateLiveClock();
+
+      const liveClockPill = document.getElementById('liveClockPill');
+      if (liveClockPill) {
+        liveClockPill.addEventListener('click', () => {
+          openLoveModal();
+          playChime(680, 0.4);
+        });
+      }
+
+      // Love Modal & Flying Hearts
+      const loveModal = document.getElementById('loveModal');
+      const loveLetterBtn = document.getElementById('loveLetterBtn');
+      const loveModalCloseBtn = document.getElementById('loveModalCloseBtn');
+      const loveModalBackdrop = document.getElementById('loveModalBackdrop');
+      const btnHeartBurst = document.getElementById('btnHeartBurst');
+
+      function openLoveModal() {
+        if (!loveModal) return;
+        loveModal.classList.add('open');
+        playChime(640, 0.5);
+        spawnHeartsBurst(10);
+      }
+
+      function closeLoveModal() {
+        if (!loveModal) return;
+        loveModal.classList.remove('open');
+      }
+
+      if (loveLetterBtn) loveLetterBtn.addEventListener('click', openLoveModal);
+      if (loveModalCloseBtn) loveModalCloseBtn.addEventListener('click', closeLoveModal);
+      if (loveModalBackdrop) loveModalBackdrop.addEventListener('click', closeLoveModal);
+
+      function spawnHeartsBurst(count = 16) {
+        const emojis = ['💖', '💕', '🌸', '✨', '🌹', '❤️', '🥰'];
+        for (let i = 0; i < count; i++) {
+          const heart = document.createElement('div');
+          heart.className = 'floating-heart';
+          heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          heart.style.left = Math.random() * 80 + 10 + 'vw';
+          heart.style.top = Math.random() * 45 + 40 + 'vh';
+          heart.style.setProperty('--drift-x', (Math.random() - 0.5) * 140 + 'px');
+          heart.style.fontSize = Math.random() * 18 + 18 + 'px';
+          document.body.appendChild(heart);
+
+          setTimeout(() => {
+            if (heart.parentNode) heart.parentNode.removeChild(heart);
+          }, 1800);
+        }
+      }
+
+      if (btnHeartBurst) {
+        btnHeartBurst.addEventListener('click', () => {
+          spawnHeartsBurst(22);
+          playChime(760, 0.45);
+        });
+      }
+
+      // Custom Cursor #dot
+      const dot = document.getElementById('dot');
+      let mouseX = -100, mouseY = -100;
+      let dotX = -100, dotY = -100;
+      let hasPointer = false;
+
+      window.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+          hasPointer = true;
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+
+          const target = e.target.closest('.card, a, button, #grid figure, .dropzone');
+          if (target) {
+            dot.classList.add('wide');
+          } else {
+            dot.classList.remove('wide');
+          }
+        }
+      });
+
+      // Main Camera & Render Loop
+      function loop() {
+        const isLit = focusedIndex !== -1;
+        const now = performance.now();
+
+        // Subtle zero-gravity idle orbit drift and glowing pulse when no interaction for 1.8s
+        const isIdle = !isDragging && !isLit && (now - lastInteractionTime > 1800);
+        document.body.classList.toggle('idle-pulse', isIdle);
+
+        if (isIdle) {
+          dragX += 0.045; // Gentle cinematic orbit
+        }
+
+        if (!isDragging && !isLit) {
+          dragX += velX;
+          dragY += velY;
+          velX *= 0.94;
+          velY *= 0.94;
+          if (Math.abs(velX) < 0.002) velX = 0;
+          if (Math.abs(velY) < 0.002) velY = 0;
+
+          const curPitch = tilt + dragY;
+          if (curPitch > 32) {
+            dragY = 32 - tilt;
+            velY = 0;
+          } else if (curPitch < -32) {
+            dragY = -32 - tilt;
+            velY = 0;
+          }
+        }
+
+        const maxScroll = window.innerHeight * 0.16;
+        const p = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
+        document.body.classList.toggle('deep', p > 0.08);
+
+        const camZTarget = p * Math.min(64, R * 0.12);
+        camZ += (camZTarget - camZ) * 0.075;
+
+        const sx = tilt + dragY;
+        const sy = spin + dragX;
+
+        worldEl.style.transform = `translateZ(${camZ}px) rotateY(${sy}deg) rotateX(${sx}deg)`;
+
+        headlineEl.style.transform = `rotateX(${-sx}deg) rotateY(${-sy}deg) translateZ(${R * 0.62}px)`;
+        headlineEl.style.opacity = Math.max(0, 1 - p * 0.55);
+
+        // Update ambient dust particles
+        drawParticles(sx, sy, camZ);
+
+        // Card depth & shading
+        const radX = (sx * Math.PI) / 180;
+        const radY = (sy * Math.PI) / 180;
+        const cosX = Math.cos(radX), sinX = Math.sin(radX);
+        const cosY = Math.cos(radY), sinY = Math.sin(radY);
+
+        const shade = 1 - Math.min(1, p * 1.6);
+        const near = perspective * 0.66;
+
+        sphereCards.forEach((sc) => {
+          const X = sc.x;
+          const Y = -sc.y;
+          const Z = sc.z;
+
+          const Y1 = Y * cosX - Z * sinX;
+          const Z1 = Y * sinX + Z * cosX;
+          const X1 = X;
+
+          const X2 = X1 * cosY + Z1 * sinY;
+          const Y2 = Y1;
+          const Z2 = -X1 * sinY + Z1 * cosY;
+
+          const zf = Math.max(-1, Math.min(1, Z2));
+          const base = 0.14 + 0.86 * Math.pow((zf + 1) / 2, 0.85);
+          let dim = shade * (1 - base);
+
+          const cardZ = zf * R + camZ;
+          let fade = 1;
+          if (cardZ > near) {
+            fade = Math.max(0, 1 - (cardZ - near) / 190);
+          }
+
+          if (isLit) {
+            dim = Math.min(1, dim + 0.78);
+            if (sc.i === focusedIndex) {
+              fade = 0;
+            }
+          }
+
+          const dRound = Math.round(dim * 1000) / 1000;
+          const opRound = Math.round(fade * 1000) / 1000;
+
+          if (sc.prevD !== dRound) {
+            sc.cardEl.style.setProperty('--d', dRound);
+            sc.prevD = dRound;
+          }
+          if (sc.prevOp !== opRound) {
+            sc.cardEl.style.opacity = opRound;
+            sc.prevOp = opRound;
+          }
+        });
+
+        // Update cursor
+        if (hasPointer) {
+          dotX += (mouseX - dotX) * 0.2;
+          dotY += (mouseY - dotY) * 0.2;
+          dot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0)`;
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      loop();
+    })();
+  </script>
+</body>
+</html>
